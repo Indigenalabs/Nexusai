@@ -11,6 +11,8 @@
         "lint:fix": "eslint . --fix",
         "typecheck": "tsc -p ./jsconfig.json",
         "preview": "vite preview",
+        "release:check": "npm run lint && npm run build && npm run db:phase2:check",
+        "release:tag": "node scripts/create-release-tag.mjs",
         "skills:preflight": "node scripts/skills-preflight.mjs",
         "skills:preflight:strict": "node scripts/skills-preflight.mjs --strict",
         "audit:app": "npm run lint && npm run build",

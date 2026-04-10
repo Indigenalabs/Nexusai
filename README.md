@@ -107,6 +107,21 @@ npm run audit:agents
 
 See [docs/runbooks/skills-wired-workflow.md](./docs/runbooks/skills-wired-workflow.md) for details.
 
+### GitHub publishing
+
+- Runbook: [docs/runbooks/github-publishing.md](./docs/runbooks/github-publishing.md)
+- Safety check before pushing:
+
+```bash
+npm run release:check
+```
+
+- Create and push a release tag:
+
+```bash
+npm run release:tag -- v0.1.0
+```
+
 `test:actions` scans all page/component `base44.functions.invoke(...)` calls and executes each discovered `function + action` pair against runtime, failing on dead actions.
 
 ### Auth mode

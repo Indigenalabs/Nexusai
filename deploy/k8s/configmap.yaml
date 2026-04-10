@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-config
+  namespace: nexus-ai
+data:
+  NODE_ENV: "production"
+  AGENT_BACKEND_PORT: "8787"
+  AGENT_AUTH_REQUIRED: "true"
+  APPROVALS_REQUIRED_FOR_RISKY: "true"
+  RATE_LIMIT_WINDOW_MS: "60000"
+  RATE_LIMIT_MAX: "240"
+  DEFAULT_DAILY_BUDGET_USD: "100"
+  SLO_SUCCESS_RATE_MIN: "0.98"
+  SLO_P95_LATENCY_MAX_MS: "2500"

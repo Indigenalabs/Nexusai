@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Container image tag"
+        required: true
+        default: "latest"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        id: build_push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.6.0
+
+      - name: Sign image (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          IMAGE_REF="ghcr.io/${{ github.repository }}@${{ steps.build_push.outputs.digest }}"
+          cosign sign --yes "$IMAGE_REF"
+
+      - name: Verify image signature
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          IMAGE_REF="ghcr.io/${{ github.repository }}@${{ steps.build_push.outputs.digest }}"
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/release.yml@.*" \
+            "$IMAGE_REF"
+
+      - name: Release summary
+        run: |
+          echo "Image pushed: ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "Digest: ${{ steps.build_push.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
+          echo "Cosign signing + verification passed." >> $GITHUB_STEP_SUMMARY
+          echo "Apply manifests from deploy/k8s with updated image tag." >> $GITHUB_STEP_SUMMARY
